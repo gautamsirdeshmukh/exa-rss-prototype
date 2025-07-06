@@ -7,9 +7,11 @@ A cross-platform mobile application that creates a curated RSS feed using the Ex
 - **Topic Management**: Add, edit, and manage topics of interest
 - **Real-time Updates**: Automatic fetching of new articles based on your topics
 - **Smart Notifications**: Configurable notification settings with quiet hours
+- **User Profiles**: Manage personal information and preferences
 - **Cross-platform**: Runs on both iOS and web
 - **Offline Support**: Articles are cached locally for offline reading
 - **AI-powered Search**: Uses Exa AI's semantic search capabilities
+- **No Setup Required**: Works immediately without API key configuration
 
 ## Setup Instructions
 
@@ -18,22 +20,26 @@ A cross-platform mobile application that creates a curated RSS feed using the Ex
 - Node.js (v16 or higher)
 - npm or yarn
 - Expo CLI (`npm install -g @expo/cli`)
-- Exa AI API key (sign up at https://exa.ai/)
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/gautamsirdeshmukh/exa-rss-prototype.git
 cd exa-rss-feed
 ```
 
-2. Install dependencies:
+2. **Configure your Exa API key** (Required):
+   - Open `src/services/ExaApiService.ts`
+   - Replace `'your-company-exa-api-key-here'` on line 5 with your actual Exa AI API key
+   - Save the file
+
+3. Install dependencies:
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
-3. Start the development server:
+4. Start the development server:
 ```bash
 npm start
 ```
@@ -44,23 +50,27 @@ npm start
 - **iOS**: Press `i` in the terminal (requires Xcode)
 - **Android**: Press `a` in the terminal (requires Android Studio)
 
-### Configuration
+### User Guide
 
-1. **API Key Setup**: 
-   - Launch the app and go to the Settings tab
-   - Enter your Exa AI API key
-   - The key will be securely stored locally
+1. **Getting Started**: 
+   - The app launches with all features immediately available
+   - No API key setup required from users
 
-2. **Add Topics**:
+2. **Set Up Your Profile**:
+   - Go to Settings tab
+   - Enter your email, username, and name
+   - Configure notification preferences
+
+3. **Add Topics**:
    - Navigate to the Topics tab
    - Tap "Add Topic" to create new topics
-   - Enter a topic name and search query
+   - Enter a topic name and search query (e.g., "AI Technology" with query "latest AI breakthroughs")
    - Toggle notifications as needed
 
-3. **Notification Settings**:
-   - Configure notification frequency (immediate, hourly, daily)
-   - Set quiet hours to avoid notifications during specific times
-   - Enable/disable notifications globally
+4. **Browse Articles**:
+   - Go to Feed tab
+   - Pull down to refresh and fetch new articles
+   - Tap articles to read them in your browser
 
 ## Project Structure
 
@@ -70,7 +80,7 @@ src/
 ├── screens/            # Main app screens
 │   ├── FeedScreen.tsx   # Article feed display
 │   ├── TopicsScreen.tsx # Topic management
-│   └── SettingsScreen.tsx # App settings
+│   └── SettingsScreen.tsx # User profile & app settings
 ├── services/           # API and utility services
 │   ├── ExaApiService.ts    # Exa AI API integration
 │   ├── StorageService.ts   # Local data persistence
@@ -89,52 +99,94 @@ src/
 
 ### Smart Notifications
 - Background fetch for new articles
-- Configurable notification frequency
+- Configurable notification frequency (immediate, hourly, daily)
 - Quiet hours support
 - Rich notifications with article counts
 
 ### Article Feed
 - Chronological display of articles
-- Topic-based filtering
+- Topic-based categorization
 - Pull-to-refresh functionality
 - Mark articles as read
 - Direct links to original sources
+
+### User Profile Management
+- Personal information storage
+- Email and username management
+- Local data persistence
+- Cache size monitoring
 
 ## API Integration
 
 The app uses the Exa AI API for intelligent content discovery:
 
 - **Neural Search**: Semantic search for more relevant results
-- **Content Extraction**: Automatic article summarization
+- **Content Extraction**: Automatic article summarization from full text
 - **Time-based Filtering**: Fetch only recent articles
-- **Domain Management**: Include/exclude specific domains
+- **Company API Key Model**: Uses a single company API key for all users
 
 ## Storage and Privacy
 
-- All data is stored locally on the device
-- API keys are securely stored using Expo SecureStore
-- No user data is sent to external servers (except Exa AI API calls)
+- All data is stored locally on the device using AsyncStorage
+- User profiles and preferences are kept private
+- No external database required
 - Users can clear all data at any time
+- Cache management tools available in Settings
 
-## Building for Production
+## Development
 
-### Web Build
+### Company API Key Model
+
+This app is designed to use a single company Exa API key rather than requiring users to provide their own keys. This approach:
+
+- **Simplifies onboarding**: Users can start using the app immediately
+- **Enables usage tracking**: Monitor API usage across all users
+- **Supports billing models**: Implement tiered pricing based on usage
+- **Improves security**: API keys are never exposed to users
+
+### Building for Production
+
+#### Web Build
 ```bash
-npm run build:web
+npx expo build:web
 ```
 
-### iOS Build
+#### iOS Build
 ```bash
-eas build --platform ios
+npx expo build:ios
 ```
+
+### Environment Variables
+
+For production deployments, consider using environment variables for the API key:
+
+```typescript
+const COMPANY_EXA_API_KEY = process.env.EXPO_PUBLIC_EXA_API_KEY || 'fallback-key';
+```
+
+## Usage Analytics
+
+The app is structured to support usage analytics and billing:
+
+- User identification through profile system
+- Local storage for offline functionality
+- Ready for backend integration
+- Scalable architecture for multi-tenant usage
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Test thoroughly on both web and iOS
 5. Submit a pull request
+
+## Deployment Considerations
+
+- **API Key Security**: Store production API keys securely
+- **Rate Limiting**: Monitor Exa API usage to avoid limits
+- **User Management**: Consider adding authentication for production
+- **Analytics**: Implement usage tracking for business insights
 
 ## License
 
@@ -143,3 +195,7 @@ This project is licensed under the MIT License.
 ## Support
 
 For issues and feature requests, please create an issue in the GitHub repository.
+
+---
+
+**Note**: Remember to replace the placeholder API key in `src/services/ExaApiService.ts` with your actual Exa AI API key before running the application.
