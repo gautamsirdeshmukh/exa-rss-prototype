@@ -9,16 +9,11 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { NotificationSettings } from '../types';
+import { NotificationSettings, UserProfile } from '../types';
 import { StorageService } from '../services/StorageService';
 import { NotificationService } from '../services/NotificationService';
 
-interface SettingsScreenProps {
-  apiKey: string;
-  setApiKey: (key: string) => void;
-}
-
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKey }) => {
+export const SettingsScreen: React.FC = () => {
   const [settings, setSettings] = useState<NotificationSettings>({
     enabled: true,
     frequency: 'hourly',
@@ -28,12 +23,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
       end: '08:00',
     },
   });
-  const [apiKeyInput, setApiKeyInput] = useState(apiKey);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    id: '1',
+    email: '',
+    username: '',
+    firstName: '',
+    lastName: '',
+    createdAt: new Date(),
+  });
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [cacheSize, setCacheSize] = useState<string>('0 KB');
 
   useEffect(() => {
     loadSettings();
     loadLastSync();
+    loadUserProfile();
+    calculateCacheSize();
   }, []);
 
   const loadSettings = async () => {
@@ -51,6 +56,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
       setLastSync(lastSyncData);
     } catch (error) {
       console.error('Error loading last sync:', error);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      const profileData = await StorageService.getUserProfile();
+      if (profileData) {
+        setUserProfile(profileData);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
+
+  const calculateCacheSize = async () => {
+    try {
+      const [articles, topics] = await Promise.all([
+        StorageService.getArticles(),
+        StorageService.getTopics(),
+      ]);
+      
+      const dataSize = JSON.stringify({ articles, topics }).length;
+      const sizeInKB = (dataSize / 1024).toFixed(1);
+      setCacheSize(`${sizeInKB} KB`);
+    } catch (error) {
+      console.error('Error calculating cache size:', error);
     }
   };
 
@@ -81,13 +112,26 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
     }
   };
 
-  const handleSaveApiKey = () => {
-    if (!apiKeyInput.trim()) {
-      Alert.alert('Error', 'Please enter a valid API key');
-      return;
+  const handleSaveProfile = async () => {
+    try {
+      await StorageService.saveUserProfile(userProfile);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      Alert.alert('Error', 'Failed to update profile');
     }
-    setApiKey(apiKeyInput.trim());
-    Alert.alert('Success', 'API key saved successfully');
+  };
+
+  const handleClearCache = async () => {
+    try {
+      const articles = await StorageService.getArticles();
+      await StorageService.saveArticles([]);
+      await calculateCacheSize();
+      Alert.alert('Success', `Cleared ${articles.length} cached articles`);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      Alert.alert('Error', 'Failed to clear cache');
+    }
   };
 
   const handleClearData = () => {
@@ -103,6 +147,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
             try {
               await StorageService.clearAllData();
               setLastSync(null);
+              setCacheSize('0 KB');
               Alert.alert('Success', 'All data cleared successfully');
             } catch (error) {
               console.error('Error clearing data:', error);
@@ -131,28 +176,70 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
     }));
   };
 
+  const updateProfile = (updates: Partial<UserProfile>) => {
+    setUserProfile(prevProfile => ({
+      ...prevProfile,
+      ...updates,
+    }));
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>API Configuration</Text>
+        <Text style={styles.sectionTitle}>👤 User Profile</Text>
         
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Exa API Key</Text>
+          <Text style={styles.label}>Email Address</Text>
           <TextInput
             style={styles.input}
-            value={apiKeyInput}
-            onChangeText={setApiKeyInput}
-            placeholder="Enter your Exa API key"
-            secureTextEntry
+            value={userProfile.email}
+            onChangeText={(email) => updateProfile({ email })}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
-          <TouchableOpacity style={styles.button} onPress={handleSaveApiKey}>
-            <Text style={styles.buttonText}>Save API Key</Text>
-          </TouchableOpacity>
         </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Username</Text>
+          <TextInput
+            style={styles.input}
+            value={userProfile.username}
+            onChangeText={(username) => updateProfile({ username })}
+            placeholder="Enter your username"
+            autoCapitalize="none"
+          />
+        </View>
+
+        <View style={styles.nameRow}>
+          <View style={[styles.inputContainer, styles.halfWidth]}>
+            <Text style={styles.label}>First Name</Text>
+            <TextInput
+              style={styles.input}
+              value={userProfile.firstName}
+              onChangeText={(firstName) => updateProfile({ firstName })}
+              placeholder="First name"
+            />
+          </View>
+          
+          <View style={[styles.inputContainer, styles.halfWidth]}>
+            <Text style={styles.label}>Last Name</Text>
+            <TextInput
+              style={styles.input}
+              value={userProfile.lastName}
+              onChangeText={(lastName) => updateProfile({ lastName })}
+              placeholder="Last name"
+            />
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleSaveProfile}>
+          <Text style={styles.buttonText}>Update Profile</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
+        <Text style={styles.sectionTitle}>🔔 Notifications</Text>
         
         <View style={styles.settingRow}>
           <Text style={styles.settingLabel}>Enable Notifications</Text>
@@ -228,7 +315,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data Management</Text>
+        <Text style={styles.sectionTitle}>💾 Data & Storage</Text>
         
         {lastSync && (
           <View style={styles.infoRow}>
@@ -238,6 +325,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ apiKey, setApiKe
             </Text>
           </View>
         )}
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Cache Size:</Text>
+          <Text style={styles.infoValue}>{cacheSize}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={handleClearCache}
+        >
+          <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+            Clear Cache
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.dangerButton]}
@@ -280,6 +381,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 16,
   },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  halfWidth: {
+    width: '48%',
+  },
   label: {
     fontSize: 16,
     fontWeight: '500',
@@ -292,7 +400,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    marginBottom: 12,
   },
   settingRow: {
     flexDirection: 'row',
@@ -360,6 +467,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  secondaryButton: {
+    backgroundColor: '#f0f0f0',
+    marginBottom: 8,
+  },
+  secondaryButtonText: {
+    color: '#333',
   },
   dangerButton: {
     backgroundColor: '#FF3B30',

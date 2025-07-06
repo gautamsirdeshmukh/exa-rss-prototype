@@ -2,13 +2,14 @@ import axios from 'axios';
 import { ExaSearchResponse, ExaSearchResult } from '../types';
 
 const EXA_API_BASE_URL = 'https://api.exa.ai';
+const COMPANY_EXA_API_KEY = 'your-company-exa-api-key-here'; // Replace with your actual key
 
 export class ExaApiService {
   private apiKey: string;
   private baseURL: string;
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor() {
+    this.apiKey = COMPANY_EXA_API_KEY;
     this.baseURL = EXA_API_BASE_URL;
   }
 
@@ -60,24 +61,6 @@ export class ExaApiService {
     }
   }
 
-  async getContents(urls: string[]): Promise<any> {
-    try {
-      const response = await axios.post(
-        `${this.baseURL}/contents`,
-        {
-          ids: urls,
-        },
-        {
-          headers: this.getHeaders(),
-        }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error('Exa API get contents error:', error);
-      throw new Error('Failed to get contents');
-    }
-  }
 
   generateDescription(text: string, maxLength: number = 150): string {
     if (!text) return '';

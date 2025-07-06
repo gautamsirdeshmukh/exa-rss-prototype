@@ -47,9 +47,28 @@ export interface NotificationSettings {
   };
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  createdAt: Date;
+}
+
+export interface UsageStats {
+  searchesUsed: number;
+  searchLimit: number;
+  planType: 'free' | 'premium' | 'enterprise';
+  billingPeriodStart: Date;
+  billingPeriodEnd: Date;
+}
+
 export interface AppState {
   topics: Topic[];
   articles: Article[];
   notificationSettings: NotificationSettings;
+  userProfile: UserProfile | null;
+  usageStats: UsageStats | null;
   lastSync: Date | null;
 }

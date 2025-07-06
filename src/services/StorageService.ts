@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Topic, Article, NotificationSettings } from '../types';
+import { Topic, Article, NotificationSettings, UserProfile } from '../types';
 
 const STORAGE_KEYS = {
   TOPICS: 'topics',
   ARTICLES: 'articles',
   NOTIFICATION_SETTINGS: 'notificationSettings',
+  USER_PROFILE: 'userProfile',
   LAST_SYNC: 'lastSync',
 };
 
@@ -94,6 +95,31 @@ export class StorageService {
       await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC, date.toISOString());
     } catch (error) {
       console.error('Error saving last sync:', error);
+    }
+  }
+
+  static async getUserProfile(): Promise<UserProfile | null> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
+      if (data) {
+        const profile = JSON.parse(data);
+        return {
+          ...profile,
+          createdAt: new Date(profile.createdAt),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      return null;
+    }
+  }
+
+  static async saveUserProfile(profile: UserProfile): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+    } catch (error) {
+      console.error('Error saving user profile:', error);
     }
   }
 
